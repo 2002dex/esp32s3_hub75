@@ -83,10 +83,14 @@ Hub75Config make_display_config()
     cfg.pins.oe = 48;
     cfg.pins.clk = 21;
 
-    cfg.output_clock_speed = Hub75ClockSpeed::HZ_10M;
-    cfg.min_refresh_rate = 90;
+    // Signal integrity and anti-ghosting tuning:
+    // 8 MHz clock provides clean setup/hold margin across 4 cascaded panels on ribbon cables.
+    // Inverted clock phase latches data in the center of the clock eye.
+    // Latch blanking = 4 guarantees OE is blanked during LAT and row address transitions.
+    cfg.output_clock_speed = Hub75ClockSpeed::HZ_8M;
+    cfg.min_refresh_rate = 70;
     cfg.latch_blanking = 4;
-    cfg.clk_phase_inverted = false;
+    cfg.clk_phase_inverted = true;
     cfg.double_buffer = true;
     cfg.brightness = DISPLAY_BRIGHTNESS;
     return cfg;
@@ -490,6 +494,8 @@ struct DashboardData {
     float pm25_ugm3 = 0.0f;
     char location[32] = "WAITING FOR NETWORK";
     char weather_description[48] = "WEATHER DATA PENDING";
+    char weather_icon[8] = "";
+    int weather_id = 0;
 };
 
 DashboardData g_dashboard;
@@ -593,6 +599,8 @@ bool fetch_weather()
     const bool has_wind = json_number(wind, "speed", wind_speed) &&
                           wind_speed >= 0.0 && wind_speed < 200.0;
     cJSON *desc = cJSON_GetObjectItemCaseSensitive(first_weather, "description");
+    cJSON *icon = cJSON_GetObjectItemCaseSensitive(first_weather, "icon");
+    cJSON *wid = cJSON_GetObjectItemCaseSensitive(first_weather, "id");
     cJSON *name = cJSON_GetObjectItemCaseSensitive(root, "name");
 
     if (has_temp && has_humidity) {
@@ -602,6 +610,9 @@ bool fetch_weather()
         if (has_wind) g_dashboard.wind_mps = static_cast<float>(wind_speed);
         if (cJSON_IsString(desc)) copy_text(g_dashboard.weather_description,
                                              sizeof(g_dashboard.weather_description), desc->valuestring);
+        if (cJSON_IsString(icon)) copy_text(g_dashboard.weather_icon,
+                                             sizeof(g_dashboard.weather_icon), icon->valuestring);
+        if (cJSON_IsNumber(wid)) g_dashboard.weather_id = wid->valueint;
         if (cJSON_IsString(name)) copy_text(g_dashboard.location,
                                              sizeof(g_dashboard.location), name->valuestring);
         g_dashboard.has_weather = true;
@@ -738,6 +749,217 @@ void get_aqi_color(int aqi, uint8_t &r, uint8_t &g, uint8_t &b)
     }
 }
 
+// ---------------------------- Pixel Art Icons -----------------------------
+struct RgbColor {
+    uint8_t r, g, b;
+};
+
+struct Icon8x8 {
+    RgbColor palette[4];
+    uint8_t p[64];
+};
+
+struct Icon5x7 {
+    RgbColor palette[4];
+    uint8_t p[35];
+};
+
+static constexpr Icon8x8 ICON_SUN = {
+    {{0, 0, 0}, {255, 140, 0}, {255, 215, 0}, {255, 255, 180}},
+    {
+        0, 0, 1, 0, 0, 1, 0, 0,
+        0, 1, 2, 2, 2, 2, 1, 0,
+        1, 2, 3, 3, 3, 3, 2, 1,
+        0, 2, 3, 3, 3, 3, 2, 0,
+        0, 2, 3, 3, 3, 3, 2, 0,
+        1, 2, 3, 3, 3, 3, 2, 1,
+        0, 1, 2, 2, 2, 2, 1, 0,
+        0, 0, 1, 0, 0, 1, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_MOON = {
+    {{0, 0, 0}, {240, 200, 30}, {255, 240, 150}, {180, 220, 255}},
+    {
+        0, 0, 0, 1, 1, 0, 0, 0,
+        0, 0, 1, 2, 2, 1, 0, 3,
+        0, 1, 2, 2, 1, 0, 0, 0,
+        0, 1, 2, 2, 0, 0, 0, 0,
+        0, 1, 2, 2, 0, 0, 0, 0,
+        0, 1, 2, 2, 1, 0, 0, 0,
+        0, 0, 1, 2, 2, 1, 0, 0,
+        0, 0, 0, 1, 1, 0, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_SUN_CLOUD = {
+    {{0, 0, 0}, {255, 180, 0}, {230, 235, 245}, {140, 160, 185}},
+    {
+        0, 1, 1, 0, 0, 0, 0, 0,
+        1, 1, 1, 1, 0, 0, 0, 0,
+        0, 1, 1, 2, 2, 2, 0, 0,
+        0, 0, 2, 2, 2, 2, 2, 0,
+        0, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2,
+        0, 3, 3, 3, 3, 3, 3, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_CLOUD = {
+    {{0, 0, 0}, {240, 245, 255}, {170, 185, 205}, {110, 125, 145}},
+    {
+        0, 0, 0, 1, 1, 0, 0, 0,
+        0, 1, 1, 1, 1, 1, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 0,
+        1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1,
+        0, 2, 2, 2, 2, 2, 2, 0,
+        0, 0, 3, 3, 3, 3, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_RAIN = {
+    {{0, 0, 0}, {180, 195, 210}, {120, 135, 155}, {0, 180, 255}},
+    {
+        0, 0, 1, 1, 1, 0, 0, 0,
+        0, 1, 1, 1, 1, 1, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 0,
+        0, 2, 2, 2, 2, 2, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 3, 0, 3, 0, 3, 0, 0,
+        0, 3, 0, 3, 0, 3, 0, 0,
+        3, 0, 3, 0, 3, 0, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_THUNDER = {
+    {{0, 0, 0}, {130, 140, 160}, {255, 230, 0}, {255, 140, 0}},
+    {
+        0, 1, 1, 1, 1, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 0, 0,
+        0, 1, 1, 1, 1, 0, 0, 0,
+        0, 0, 0, 2, 2, 0, 0, 0,
+        0, 0, 2, 2, 0, 0, 0, 0,
+        0, 0, 0, 2, 2, 2, 0, 0,
+        0, 0, 0, 0, 2, 0, 0, 0,
+        0, 0, 0, 3, 0, 0, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_SNOW = {
+    {{0, 0, 0}, {170, 185, 210}, {160, 230, 255}, {255, 255, 255}},
+    {
+        0, 1, 1, 1, 1, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 0, 0,
+        0, 1, 1, 1, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 3, 0, 2, 0, 3, 0, 0,
+        2, 0, 3, 3, 3, 0, 2, 0,
+        0, 3, 0, 2, 0, 3, 0, 0,
+        0, 0, 2, 0, 2, 0, 0, 0,
+    }
+};
+
+static constexpr Icon8x8 ICON_MIST = {
+    {{0, 0, 0}, {200, 215, 230}, {140, 160, 180}, {90, 110, 130}},
+    {
+        0, 1, 1, 1, 1, 1, 1, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2, 2, 2, 2, 2, 2, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 3, 3, 3, 3, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    }
+};
+
+static constexpr Icon5x7 ICON_THERMO = {
+    {{0, 0, 0}, {255, 60, 60}, {220, 220, 220}, {255, 180, 180}},
+    {
+        0, 2, 2, 2, 0,
+        0, 2, 1, 2, 0,
+        0, 2, 1, 2, 0,
+        0, 2, 1, 2, 0,
+        2, 1, 1, 1, 2,
+        2, 1, 3, 1, 2,
+        0, 2, 2, 2, 0,
+    }
+};
+
+static constexpr Icon5x7 ICON_DROPLET = {
+    {{0, 0, 0}, {0, 180, 255}, {160, 235, 255}, {0, 100, 210}},
+    {
+        0, 0, 1, 0, 0,
+        0, 1, 2, 1, 0,
+        0, 1, 2, 1, 0,
+        1, 1, 2, 1, 1,
+        1, 2, 2, 1, 1,
+        1, 1, 1, 3, 3,
+        0, 3, 3, 3, 0,
+    }
+};
+
+void draw_icon_8x8(Hub75Driver &display, const Icon8x8 &icon, int x, int y)
+{
+    for (int r = 0; r < 8; ++r) {
+        for (int c = 0; c < 8; ++c) {
+            const uint8_t idx = icon.p[r * 8 + c];
+            if (idx == 0) continue;
+            const auto &col = icon.palette[idx];
+            const int px = x + c;
+            const int py = y + r;
+            if (px >= 0 && px < DISPLAY_WIDTH && py >= 0 && py < DISPLAY_HEIGHT) {
+                display.set_pixel(static_cast<uint16_t>(px), static_cast<uint16_t>(py),
+                                  col.r, col.g, col.b);
+            }
+        }
+    }
+}
+
+void draw_icon_5x7(Hub75Driver &display, const Icon5x7 &icon, int x, int y)
+{
+    for (int r = 0; r < 7; ++r) {
+        for (int c = 0; c < 5; ++c) {
+            const uint8_t idx = icon.p[r * 5 + c];
+            if (idx == 0) continue;
+            const auto &col = icon.palette[idx];
+            const int px = x + c;
+            const int py = y + r;
+            if (px >= 0 && px < DISPLAY_WIDTH && py >= 0 && py < DISPLAY_HEIGHT) {
+                display.set_pixel(static_cast<uint16_t>(px), static_cast<uint16_t>(py),
+                                  col.r, col.g, col.b);
+            }
+        }
+    }
+}
+
+const Icon8x8 &get_weather_icon(const char *icon_code, int weather_id)
+{
+    if (icon_code && icon_code[0] != '\0') {
+        if (std::strcmp(icon_code, "01d") == 0) return ICON_SUN;
+        if (std::strcmp(icon_code, "01n") == 0) return ICON_MOON;
+        if (std::strncmp(icon_code, "02", 2) == 0) return ICON_SUN_CLOUD;
+        if (std::strncmp(icon_code, "03", 2) == 0 || std::strncmp(icon_code, "04", 2) == 0) return ICON_CLOUD;
+        if (std::strncmp(icon_code, "09", 2) == 0 || std::strncmp(icon_code, "10", 2) == 0) return ICON_RAIN;
+        if (std::strncmp(icon_code, "11", 2) == 0) return ICON_THUNDER;
+        if (std::strncmp(icon_code, "13", 2) == 0) return ICON_SNOW;
+        if (std::strncmp(icon_code, "50", 2) == 0) return ICON_MIST;
+    }
+    // Fallback to weather_id
+    if (weather_id >= 200 && weather_id < 300) return ICON_THUNDER;
+    if (weather_id >= 300 && weather_id < 600) return ICON_RAIN;
+    if (weather_id >= 600 && weather_id < 700) return ICON_SNOW;
+    if (weather_id >= 700 && weather_id < 800) return ICON_MIST;
+    if (weather_id == 800) return ICON_SUN;
+    if (weather_id > 800) return ICON_CLOUD;
+    return ICON_SUN;
+}
+
+constexpr int TEXT_MARGIN_X = 8; // Indent starting text for clear viewing angle from bezel
+
 void draw_dashboard(Hub75Driver &display, const PpmImage &image,
                     int image_offset, const DashboardData &data)
 {
@@ -748,9 +970,9 @@ void draw_dashboard(Hub75Driver &display, const PpmImage &image,
     // Draw scrolling image in the top 192x48 area
     draw_scrolling_image(display, image, image_offset);
 
-    // A one-pixel separator divides the animated image from the information.
-    display.fill(0, IMAGE_VIEW_HEIGHT, DISPLAY_WIDTH, 1, 0, 70, 110);
+    // Separator line between scrolling image and data has been removed per request.
 
+    // Line 1: Date, Time & City Name
     char line1[64] = "TIME SYNCING";
     char time_text[24] = {};
     time_t now = time(nullptr);
@@ -761,23 +983,36 @@ void draw_dashboard(Hub75Driver &display, const PpmImage &image,
         std::snprintf(line1, sizeof(line1), "%s %s", time_text,
                       data.has_weather ? data.location : "");
     }
+    draw_text(display, line1, TEXT_MARGIN_X, 50, 230, 230, 230);
 
-    char line2[64];
+    // Line 2: Weather icon + Condition description + Wind speed
     if (data.has_weather) {
-        std::snprintf(line2, sizeof(line2), "WX %s WIND %.1fM/S",
+        draw_icon_8x8(display, get_weather_icon(data.weather_icon, data.weather_id),
+                      TEXT_MARGIN_X, 59);
+        char line2[64];
+        std::snprintf(line2, sizeof(line2), "%s  WIND %.1fM/S",
                       data.weather_description, data.wind_mps);
+        draw_text(display, line2, TEXT_MARGIN_X + 11, 60, 255, 210, 40);
     } else {
-        std::snprintf(line2, sizeof(line2), "WX WAITING FOR DATA");
+        draw_text(display, "WX WAITING FOR DATA", TEXT_MARGIN_X, 60, 255, 210, 40);
     }
 
-    char line3[64];
+    // Line 3: Thermometer icon + Temperature, Droplet icon + Humidity
     if (data.has_weather) {
-        std::snprintf(line3, sizeof(line3), "T:%.1fC HUM:%d%%",
-                      data.temperature_c, data.humidity_percent);
+        draw_icon_5x7(display, ICON_THERMO, TEXT_MARGIN_X, 70);
+        char temp_str[16];
+        std::snprintf(temp_str, sizeof(temp_str), "%.1fC", data.temperature_c);
+        draw_text(display, temp_str, TEXT_MARGIN_X + 7, 70, 255, 120, 120);
+
+        draw_icon_5x7(display, ICON_DROPLET, TEXT_MARGIN_X + 62, 70);
+        char hum_str[16];
+        std::snprintf(hum_str, sizeof(hum_str), "%d%%", data.humidity_percent);
+        draw_text(display, hum_str, TEXT_MARGIN_X + 69, 70, 0, 220, 255);
     } else {
-        std::snprintf(line3, sizeof(line3), "TEMP:N/A HUM:N/A");
+        draw_text(display, "TEMP:N/A HUM:N/A", TEXT_MARGIN_X, 70, 0, 220, 255);
     }
 
+    // Line 4: Air Quality Index + PM2.5
     char line4[64];
     if (data.has_aqi) {
         std::snprintf(line4, sizeof(line4), "AQI:%d %s PM2.5:%.1f",
@@ -785,13 +1020,9 @@ void draw_dashboard(Hub75Driver &display, const PpmImage &image,
     } else {
         std::snprintf(line4, sizeof(line4), "AQI:N/A PM2.5:N/A");
     }
-
-    draw_text(display, line1, 2, 50, 230, 230, 230);
-    draw_text(display, line2, 2, 60, 255, 210, 40);
-    draw_text(display, line3, 2, 70, 0, 220, 255);
     uint8_t aqi_r, aqi_g, aqi_b;
     get_aqi_color(data.has_aqi ? data.aqi_index : 0, aqi_r, aqi_g, aqi_b);
-    draw_text(display, line4, 2, 80, aqi_r, aqi_g, aqi_b);
+    draw_text(display, line4, TEXT_MARGIN_X, 80, aqi_r, aqi_g, aqi_b);
 }
 
 void display_task(void *arg)
