@@ -307,6 +307,11 @@ void ethernet_event_handler(void *arg, esp_event_base_t event_base,
     if (event_id == ETHERNET_EVENT_CONNECTED) {
         ESP_LOGI(TAG, "W5500 Ethernet link connected");
         xEventGroupSetBits(g_network_events, BIT_ETH_LINK);
+#ifdef CONFIG_ETH_USE_STATIC_IP
+        ESP_LOGI(TAG, "Static IP active: %s, Gateway: %s",
+                 CONFIG_ETH_STATIC_IP_ADDR, CONFIG_ETH_STATIC_GATEWAY);
+        xEventGroupSetBits(g_network_events, BIT_IP_READY);
+#endif
     } else if (event_id == ETHERNET_EVENT_DISCONNECTED) {
         ESP_LOGW(TAG, "W5500 Ethernet link disconnected");
         xEventGroupClearBits(g_network_events, BIT_ETH_LINK | BIT_IP_READY);
@@ -345,6 +350,13 @@ void ip_event_handler(void *arg, esp_event_base_t event_base,
         dns_backup.ip.type = ESP_IPADDR_TYPE_V4;
         dns_backup.ip.u_addr.ip4.addr = esp_ip4addr_aton("1.1.1.1");
         esp_netif_set_dns_info(event->esp_netif, ESP_NETIF_DNS_BACKUP, &dns_backup);
+
+        if (event->ip_info.gw.addr != esp_ip4addr_aton("192.168.1.1")) {
+            ESP_LOGW(TAG, "NOTICE: Gateway is " IPSTR " (not 192.168.1.1). If this is an unexpected subnet,",
+                     IP2STR(&event->ip_info.gw));
+            ESP_LOGW(TAG, "a rogue DHCP server on your switch may have answered first.");
+            ESP_LOGW(TAG, "Enable 'Use Static IP' in menuconfig to force 192.168.1.1 gateway.");
+        }
 
         xEventGroupSetBits(g_network_events, BIT_IP_READY);
     }
@@ -433,12 +445,38 @@ void init_w5500_ethernet()
     ESP_ERROR_CHECK(esp_netif_attach(g_eth_netif, esp_eth_new_netif_glue(g_eth_handle)));
     ESP_ERROR_CHECK(esp_netif_set_default_netif(g_eth_netif));
 
+#ifdef CONFIG_ETH_USE_STATIC_IP
+    ESP_LOGI(TAG, "Configuring Static IP: %s, Netmask: %s, Gateway: %s",
+             CONFIG_ETH_STATIC_IP_ADDR, CONFIG_ETH_STATIC_NETMASK, CONFIG_ETH_STATIC_GATEWAY);
+    ESP_ERROR_CHECK(esp_netif_dhcpc_stop(g_eth_netif));
+
+    esp_netif_ip_info_t static_ip_info{};
+    static_ip_info.ip.addr = esp_ip4addr_aton(CONFIG_ETH_STATIC_IP_ADDR);
+    static_ip_info.netmask.addr = esp_ip4addr_aton(CONFIG_ETH_STATIC_NETMASK);
+    static_ip_info.gw.addr = esp_ip4addr_aton(CONFIG_ETH_STATIC_GATEWAY);
+    ESP_ERROR_CHECK(esp_netif_set_ip_info(g_eth_netif, &static_ip_info));
+
+    esp_netif_dns_info_t static_dns_main{};
+    static_dns_main.ip.type = ESP_IPADDR_TYPE_V4;
+    static_dns_main.ip.u_addr.ip4.addr = esp_ip4addr_aton(CONFIG_ETH_STATIC_DNS_MAIN);
+    ESP_ERROR_CHECK(esp_netif_set_dns_info(g_eth_netif, ESP_NETIF_DNS_MAIN, &static_dns_main));
+
+    esp_netif_dns_info_t static_dns_backup{};
+    static_dns_backup.ip.type = ESP_IPADDR_TYPE_V4;
+    static_dns_backup.ip.u_addr.ip4.addr = esp_ip4addr_aton(CONFIG_ETH_STATIC_DNS_BACKUP);
+    ESP_ERROR_CHECK(esp_netif_set_dns_info(g_eth_netif, ESP_NETIF_DNS_BACKUP, &static_dns_backup));
+#endif
+
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID,
                                                 &ethernet_event_handler, nullptr));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP,
                                                 &ip_event_handler, nullptr));
+#ifdef CONFIG_ETH_USE_STATIC_IP
+    ESP_LOGI(TAG, "W5500 started with Static IP: %s; waiting for link", CONFIG_ETH_STATIC_IP_ADDR);
+#else
     ESP_ERROR_CHECK(esp_eth_start(g_eth_handle));
     ESP_LOGI(TAG, "W5500 started; waiting for link and DHCP address");
+#endif
 }
 
 // ----------------------- Weather / AQI network data -----------------------

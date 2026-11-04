@@ -25,3 +25,42 @@ config WEATHER_UPDATE_INTERVAL_MIN
     default 10
 
 endmenu
+
+menu "Ethernet network configuration"
+config ETH_USE_STATIC_IP
+    bool "Use Static IP instead of DHCP"
+    default n
+    help
+        Enable this if a rogue DHCP server on your switch is assigning the wrong subnet (e.g. 192.168.2.x),
+        or if you want a reliable fixed IP directly on your router's 192.168.1.x subnet.
+config ETH_STATIC_IP_ADDR
+    string "Static IPv4 address"
+    depends on ETH_USE_STATIC_IP
+    default "192.168.1.222"
+    help
+        Static IP address to assign to the ESP32 Ethernet interface.
+config ETH_STATIC_NETMASK
+    string "Static IPv4 netmask"
+    depends on ETH_USE_STATIC_IP
+    default "255.255.255.0"
+    help
+        Subnet mask for the static IP address.
+config ETH_STATIC_GATEWAY
+    string "Static IPv4 gateway"
+    depends on ETH_USE_STATIC_IP
+    default "192.168.1.1"
+    help
+        Default gateway IP (your main router).
+config ETH_STATIC_DNS_MAIN
+    string "Static primary DNS server"
+    depends on ETH_USE_STATIC_IP
+    default "192.168.1.1"
+    help
+        Primary DNS server (e.g. 192.168.1.1 or 8.8.8.8).
+config ETH_STATIC_DNS_BACKUP
+    string "Static backup DNS server"
+    depends on ETH_USE_STATIC_IP
+    default "8.8.8.8"
+    help
+        Backup DNS server (e.g. 8.8.8.8).
+endmenu
