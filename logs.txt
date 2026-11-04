@@ -1,0 +1,214 @@
+deep@DSP-DEEP:~/esp32s3/RGB_matrix/esp32s3_hub75_weather_image$ idf.py --port /dev/ttyACM0 monitor
+Executing action: monitor
+Running idf_monitor in directory /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image
+Executing "/home/deep/.espressif/python_env/idf5.5_py3.12_env/bin/python /home/deep/esp-idf/tools/idf_monitor.py -p /dev/ttyACM0 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/build/esp32s3_hub75_weather_image.elf /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/build/bootloader/bootloader.elf -m '/home/deep/.espressif/python_env/idf5.5_py3.12_env/bin/python' '/home/deep/esp-idf/tools/idf.py' '--port' '/dev/ttyACM0'"...
+--- esp-idf-monitor 1.9.0 on /dev/ttyACM0 115200
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+E (685659) task_wdt: Task watchdog got triggered. The following ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x9 (SPI_FAST_FLASH_BOOT)
+Saved PC:0x4037a1d2
+--- 0x4037a1d2: esp_cpu_wait_for_intr at /home/deep/esp-idf/components/esp_hw_support/cpu.c:64
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x14f0
+load:0x403c8700,len:0xd24
+--- 0x403c8700: _stext at ??:?
+load:0x403cb700,len:0x2ef0
+entry 0x403c8924
+--- 0x403c8924: call_start_cpu0 at /home/deep/esp-idf/components/bootloader/subproject/main/bootloader_start.c:27
+I (24) boot: ESP-IDF v5.5.4 2nd stage bootloader
+I (24) boot: compile time Oct 30 2026 13:04:02
+I (25) boot: Multicore bootloader
+I (25) boot: chip revision: v0.2
+I (27) boot: efuse block revision: v1.3
+I (31) boot.esp32s3: Boot SPI Speed : 80MHz
+I (35) boot.esp32s3: SPI Mode       : DIO
+I (39) boot.esp32s3: SPI Flash Size : 2MB
+I (42) boot: Enabling RNG early entropy source...
+I (47) boot: Partition Table:
+I (50) boot: ## Label            Usage          Type ST Offset   Length
+I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (62) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (69) boot:  2 factory          factory app      00 00 00010000 00100000
+I (75) boot: End of partition table
+I (79) esp_image: segment 0: paddr=00010020 vaddr=3c070020 size=3d610h (251408) map
+I (130) esp_image: segment 1: paddr=0004d638 vaddr=3fc96b00 size=029e0h ( 10720) load
+I (133) esp_image: segment 2: paddr=00050020 vaddr=42000020 size=6c1f4h (442868) map
+I (212) esp_image: segment 3: paddr=000bc21c vaddr=3fc994e0 size=00a3ch (  2620) load
+I (213) esp_image: segment 4: paddr=000bcc60 vaddr=40374000 size=12a74h ( 76404) load
+I (233) esp_image: segment 5: paddr=000cf6dc vaddr=50000000 size=00020h (    32) load
+I (240) boot: Loaded app from partition at offset 0x10000
+I (241) boot: Disabling RNG early entropy source...
+I (251) cpu_start: Multicore app
+I (259) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (260) cpu_start: Pro cpu start user code
+I (260) cpu_start: cpu freq: 160000000 Hz
+I (261) app_init: Application information:
+I (265) app_init: Project name:     esp32s3_hub75_weather_image
+I (271) app_init: App version:      1
+I (274) app_init: Compile time:     Oct 30 2026 13:03:31
+I (279) app_init: ELF file SHA256:  c1deab16f...
+I (284) app_init: ESP-IDF:          v5.5.4
+I (287) efuse_init: Min chip rev:     v0.0
+I (291) efuse_init: Max chip rev:     v0.99
+I (295) efuse_init: Chip rev:         v0.2
+I (299) heap_init: Initializing. RAM available for dynamic allocation:
+I (305) heap_init: At 3FC9BBC0 len 0004DB50 (310 KiB): RAM
+I (311) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (316) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (321) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (327) spi_flash: detected chip: winbond
+I (330) spi_flash: flash io: dio
+W (333) spi_flash: Detected size(16384k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (345) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (352) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (358) main_task: Started on CPU0
+I (368) main_task: Calling app_main()
+I (368) HUB75: Driver created for ESP32-S3 (LCD_CAM+GDMA)
+I (368) HUB75: Panel: 96x48, Layout: 2x2, Virtual: 192x96
+I (378) HUB75: Config: 8-bit depth (compile-time), 24 row addresses, four-scan: no
+I (378) WEATHER_MATRIX: Starting 192x96 HUB75 weather/image dashboard
+I (388) HUB75: Initializing Hub75 driver...
+I (388) PlatformDma: Initialized CIE1931 LUT for 8-bit depth
+I (398) GdmaDma: Initializing LCD_CAM peripheral with GDMA...
+I (398) GdmaDma: Pin config: R1=1 G1=2 B1=15 R2=16 G2=17 B2=18
+I (408) GdmaDma: Pin config: A=38 B=39 C=40 D=41 E=42 LAT=47 OE=48 CLK=21
+I (418) GdmaDma: LCD clock: PLL_F160M / 16 = 10.00 MHz
+I (418) GdmaDma: GDMA strategy configured: owner_check=false, auto_update_desc=false
+I (428) GdmaDma: GDMA EOF callback registered successfully
+I (428) GdmaDma: Panel config: 96x48 pixels, 2x2 layout, virtual: 192x96
+I (438) GdmaDma: DMA config: 384x24 (width x rows), four-scan: no
+I (448) GdmaDma: LCD_CAM + GDMA initialized successfully
+I (448) GdmaDma: Clock: 10.00 MHz (requested 10 MHz)
+I (458) GdmaDma: Buffer transmission time: 38.40 µs (384 pixels @ 10000000 Hz)
+I (458) GdmaDma: lsbMsbTransitionBit=4 achieves 90 Hz (target 90 Hz)
+W (468) GdmaDma: Using lsbMsbTransitionBit=4, lower 5 bits show once (reduced color depth for speed)
+I (478) GdmaDma: BCM timing calculated (lsbMsbTransitionBit used by set_brightness_oe for OE control)
+I (488) GdmaDma: Adjusted 163 LUT entries for BCM monotonicity (lsbMsbTransitionBit=4)
+I (488) GdmaDma: Brightness configuration validated: dma_width=384, latch_blanking=2, all bit planes have sufficient headroom
+I (508) GdmaDma: Allocating buffer A: 147456 bytes for 24 rows
+I (508) GdmaDma: Buffer A allocated: 24 rows × 6144 bytes/row = 147456 total
+I (518) GdmaDma: Allocating buffer B: 147456 bytes (double buffering enabled)
+I (528) GdmaDma: Buffer B allocated: 24 rows × 6144 bytes/row = 147456 total (double buffer mode)
+I (528) GdmaDma: Initializing blank DMA buffers with control bits...
+I (548) GdmaDma: Blank buffers initialized
+I (548) PlatformDma: Brightness coeffs: min=3, a=4, b=63987, c=132640 (16.16 fixed-point)
+I (578) GdmaDma: Building BCM descriptor chain: 288 descriptors (12 per row) for 24 rows × 8 bits
+I (578) GdmaDma:   BCM via descriptor repetition (lsbMsbTransitionBit=4)
+I (578) GdmaDma:   Allocating 3456 bytes per descriptor array
+I (588) GdmaDma: BCM descriptor chain [0] built: 288 descriptors in continuous loop
+I (588) GdmaDma: BCM descriptor chain [1] built: 288 descriptors in continuous loop (double buffer mode)
+I (598) GdmaDma: Descriptor-chain DMA setup complete
+I (608) GdmaDma: Starting descriptor-chain DMA:
+I (608) GdmaDma:   Descriptor count: 288
+I (618) GdmaDma:   Rows: 24, Bits: 8
+I (618) GdmaDma: Descriptor-chain DMA transfer started - running continuously
+I (628) HUB75: Driver started successfully
+I (648) WEATHER_MATRIX: Embedded PPM loaded from flash: 384x48
+E (958) gpio: gpio_isr_handler_add(564): GPIO isr service is not installed, call gpio_install_isr_service() first
+I (968) esp_eth.netif.netif_glue: 00:00:00:00:00:00
+I (968) esp_eth.netif.netif_glue: ethernet attached to netif
+I (978) WEATHER_MATRIX: W5500 started; waiting for link and DHCP address
+I (978) WEATHER_MATRIX: W5500 Ethernet driver started
+I (978) main_task: Returned from app_main()
+I (2978) WEATHER_MATRIX: W5500 Ethernet link connected
+E (5658) task_wdt: Task watchdog got triggered. The following tasks/users did not reset the watchdog in time:
+E (5658) task_wdt:  - IDLE1 (CPU 1)
+E (5658) task_wdt: Tasks currently running:
+E (5658) task_wdt: CPU 0: IDLE0
+E (5658) task_wdt: CPU 1: matrix_display
+E (5658) task_wdt: Print CPU 1 backtrace
+
+
+Backtrace: 0x4037874E:0x3FC98440 0x40377BD9:0x3FC98460 0x403776D9:0x3FCECFD0 0x40379C72:0x3FCED050 0x40376D3E:0x3FCED080 0x4200C3E1:0x3FCED0C0 0x4200C4CA:0x3FCED0E0 0x4200C718:0x3FCED260 0x4037CE31:0x3FCED2F0
+--- 0x4037874e: esp_crosscore_isr at /home/deep/esp-idf/components/esp_system/crosscore_int.c:74
+--- 0x40377bd9: _xt_lowint1 at /home/deep/esp-idf/components/xtensa/xtensa_vectors.S:1240
+--- 0x403776d9: hub75::GdmaDma::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/platforms/gdma/gdma_dma.cpp:658
+--- 0x40379c72: Hub75Driver::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:131
+--- 0x40376d3e: Hub75Driver::set_pixel(unsigned short, unsigned short, unsigned char, unsigned char, unsigned char) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:138
+--- 0x4200c3e1: (anonymous namespace)::draw_scrolling_image(Hub75Driver&, (anonymous namespace)::PpmImage const&, int) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:262
+--- 0x4200c4ca: (anonymous namespace)::draw_dashboard(Hub75Driver&, (anonymous namespace)::PpmImage const&, int, (anonymous namespace)::DashboardData const&) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:649
+--- 0x4200c718: (anonymous namespace)::display_task(void*) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:712
+--- 0x4037ce31: vPortTaskWrapper at /home/deep/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/port.c:139
+
+E (10658) task_wdt: Task watchdog got triggered. The following tasks/users did not reset the watchdog in time:
+E (10658) task_wdt:  - IDLE1 (CPU 1)
+E (10658) task_wdt: Tasks currently running:
+E (10658) task_wdt: CPU 0: IDLE0
+E (10658) task_wdt: CPU 1: matrix_display
+E (10658) task_wdt: Print CPU 1 backtrace
+
+
+Backtrace: 0x4037874E:0x3FC98440 0x40377BD9:0x3FC98460 0x42065867:0x3FCED0A0 0x420657DF:0x3FCED0C0 0x4200C4C1:0x3FCED0E0 0x4200C718:0x3FCED260 0x4037CE31:0x3FCED2F0
+--- 0x4037874e: esp_crosscore_isr at /home/deep/esp-idf/components/esp_system/crosscore_int.c:74
+--- 0x40377bd9: _xt_lowint1 at /home/deep/esp-idf/components/xtensa/xtensa_vectors.S:1240
+--- 0x42065867: hub75::GdmaDma::clear() at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/platforms/gdma/gdma_dma.cpp:691
+--- 0x420657df: Hub75Driver::clear() at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:144
+--- 0x4200c4c1: (anonymous namespace)::draw_dashboard(Hub75Driver&, (anonymous namespace)::PpmImage const&, int, (anonymous namespace)::DashboardData const&) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:648
+--- 0x4200c718: (anonymous namespace)::display_task(void*) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:712
+--- 0x4037ce31: vPortTaskWrapper at /home/deep/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/port.c:139
+
+E (15658) task_wdt: Task watchdog got triggered. The following tasks/users did not reset the watchdog in time:
+E (15658) task_wdt:  - IDLE1 (CPU 1)
+E (15658) task_wdt: Tasks currently running:
+E (15658) task_wdt: CPU 0: IDLE0
+E (15658) task_wdt: CPU 1: matrix_display
+E (15658) task_wdt: Print CPU 1 backtrace
+
+
+Backtrace: 0x4037874E:0x3FC98440 0x40377BD9:0x3FC98460 0x4037770E:0x3FCECFD0 0x40379C72:0x3FCED050 0x40376D3E:0x3FCED080 0x4200C3E1:0x3FCED0C0 0x4200C4CA:0x3FCED0E0 0x4200C718:0x3FCED260 0x4037CE31:0x3FCED2F0
+--- 0x4037874e: esp_crosscore_isr at /home/deep/esp-idf/components/esp_system/crosscore_int.c:74
+--- 0x40377bd9: _xt_lowint1 at /home/deep/esp-idf/components/xtensa/xtensa_vectors.S:1240
+--- 0x4037770e: hub75::GdmaDma::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/platforms/gdma/gdma_dma.cpp:663
+--- 0x40379c72: Hub75Driver::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:131
+--- 0x40376d3e: Hub75Driver::set_pixel(unsigned short, unsigned short, unsigned char, unsigned char, unsigned char) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:138
+--- 0x4200c3e1: (anonymous namespace)::draw_scrolling_image(Hub75Driver&, (anonymous namespace)::PpmImage const&, int) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:262
+--- 0x4200c4ca: (anonymous namespace)::draw_dashboard(Hub75Driver&, (anonymous namespace)::PpmImage const&, int, (anonymous namespace)::DashboardData const&) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:649
+--- 0x4200c718: (anonymous namespace)::display_task(void*) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:712
+--- 0x4037ce31: vPortTaskWrapper at /home/deep/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/port.c:139
+
+E (20658) task_wdt: Task watchdog got triggered. The following tasks/users did not reset the watchdog in time:
+E (20658) task_wdt:  - IDLE1 (CPU 1)
+E (20658) task_wdt: Tasks currently running:
+E (20658) task_wdt: CPU 0: IDLE0
+E (20658) task_wdt: CPU 1: matrix_display
+E (20658) task_wdt: Print CPU 1 backtrace
+
+
+Backtrace: 0x4037874E:0x3FC98440 0x40377BD9:0x3FC98460 0x40377730:0x3FCECFD0 0x40379C72:0x3FCED050 0x40376D3E:0x3FCED080 0x4200C3E1:0x3FCED0C0 0x4200C4CA:0x3FCED0E0 0x4200C718:0x3FCED260 0x4037CE31:0x3FCED2F0
+--- 0x4037874e: esp_crosscore_isr at /home/deep/esp-idf/components/esp_system/crosscore_int.c:74
+--- 0x40377bd9: _xt_lowint1 at /home/deep/esp-idf/components/xtensa/xtensa_vectors.S:1240
+--- 0x40377730: hub75::GdmaDma::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/platforms/gdma/gdma_dma.cpp:653
+--- 0x40379c72: Hub75Driver::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:131
+--- 0x40376d3e: Hub75Driver::set_pixel(unsigned short, unsigned short, unsigned char, unsigned char, unsigned char) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:138
+--- 0x4200c3e1: (anonymous namespace)::draw_scrolling_image(Hub75Driver&, (anonymous namespace)::PpmImage const&, int) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:262
+--- 0x4200c4ca: (anonymous namespace)::draw_dashboard(Hub75Driver&, (anonymous namespace)::PpmImage const&, int, (anonymous namespace)::DashboardData const&) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:649
+--- 0x4200c718: (anonymous namespace)::display_task(void*) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:712
+--- 0x4037ce31: vPortTaskWrapper at /home/deep/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/port.c:139
+
+E (25658) task_wdt: Task watchdog got triggered. The following tasks/users did not reset the watchdog in time:
+E (25658) task_wdt:  - IDLE1 (CPU 1)
+E (25658) task_wdt: Tasks currently running:
+E (25658) task_wdt: CPU 0: IDLE0
+E (25658) task_wdt: CPU 1: matrix_display
+E (25658) task_wdt: Print CPU 1 backtrace
+
+
+Backtrace: 0x4037874E:0x3FC98440 0x40377BD9:0x3FC98460 0x403776F3:0x3FCECFD0 0x40379C72:0x3FCED050 0x40376D3E:0x3FCED080 0x4200C3E1:0x3FCED0C0 0x4200C4CA:0x3FCED0E0 0x4200C718:0x3FCED260 0x4037CE31:0x3FCED2F0
+--- 0x4037874e: esp_crosscore_isr at /home/deep/esp-idf/components/esp_system/crosscore_int.c:74
+--- 0x40377bd9: _xt_lowint1 at /home/deep/esp-idf/components/xtensa/xtensa_vectors.S:1240
+--- 0x403776f3: hub75::GdmaDma::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/platforms/gdma/gdma_dma.cpp:663
+--- 0x40379c72: Hub75Driver::draw_pixels(unsigned short, unsigned short, unsigned short, unsigned short, unsigned char const*, Hub75PixelFormat, Hub75ColorOrder, bool) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:131
+--- 0x40376d3e: Hub75Driver::set_pixel(unsigned short, unsigned short, unsigned char, unsigned char, unsigned char) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/managed_components/esphome__esp-hub75/src/core/hub75_driver.cpp:138
+--- 0x4200c3e1: (anonymous namespace)::draw_scrolling_image(Hub75Driver&, (anonymous namespace)::PpmImage const&, int) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:262
+--- 0x4200c4ca: (anonymous namespace)::draw_dashboard(Hub75Driver&, (anonymous namespace)::PpmImage const&, int, (anonymous namespace)::DashboardData const&) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:649
+--- 0x4200c718: (anonymous namespace)::display_task(void*) at /home/deep/esp32s3/RGB_matrix/esp32s3_hub75_weather_image/main/main.cpp:712
+--- 0x4037ce31: vPortTaskWrapper at /home/deep/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/port.c:139
+
+E (30658) task_wdt: Task watchdog got triggered. The following tasks/users did not reset the watchdog in time:
+E (30658) task_wdt:  - IDLE1 (CPU 1)
+E (30658) task_wdt: Tasks currently running:
+E (30658) task_wdt: CPU 0: IDLE0
+E (30658) task_wdt: CPU 1: matrix_display
+E (30658) task_wdt: Print CPU 1 backtrace

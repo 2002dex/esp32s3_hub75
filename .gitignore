@@ -1,0 +1,13 @@
+# ESP-IDF build and configuration artifacts
+build/
+sdkconfig
+sdkconfig.old
+
+# Python & environment files
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Local IDE settings
+.vscode/
+.idea/

@@ -1,0 +1,27 @@
+menu "Weather display configuration"
+
+config OPENWEATHER_API_KEY
+    string "OpenWeatherMap API key"
+    default ""
+    help
+        API key for OpenWeatherMap Current Weather and Air Pollution APIs.
+        Do not commit the key to source control.
+
+config WEATHER_LATITUDE
+    string "Weather latitude"
+    default "22.317573"
+    help
+        Latitude used for weather and air-pollution requests.
+
+config WEATHER_LONGITUDE
+    string "Weather longitude"
+    default "73.142594"
+    help
+        Longitude used for weather and air-pollution requests.
+
+config WEATHER_UPDATE_INTERVAL_MIN
+    int "Weather update interval (minutes)"
+    range 1 180
+    default 10
+
+endmenu
