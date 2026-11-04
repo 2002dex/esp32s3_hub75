@@ -85,7 +85,7 @@ Hub75Config make_display_config()
 
     cfg.output_clock_speed = Hub75ClockSpeed::HZ_10M;
     cfg.min_refresh_rate = 90;
-    cfg.latch_blanking = 2;
+    cfg.latch_blanking = 4;
     cfg.clk_phase_inverted = false;
     cfg.double_buffer = true;
     cfg.brightness = DISPLAY_BRIGHTNESS;
@@ -471,10 +471,10 @@ void init_w5500_ethernet()
                                                 &ethernet_event_handler, nullptr));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP,
                                                 &ip_event_handler, nullptr));
+    ESP_ERROR_CHECK(esp_eth_start(g_eth_handle));
 #ifdef CONFIG_ETH_USE_STATIC_IP
     ESP_LOGI(TAG, "W5500 started with Static IP: %s; waiting for link", CONFIG_ETH_STATIC_IP_ADDR);
 #else
-    ESP_ERROR_CHECK(esp_eth_start(g_eth_handle));
     ESP_LOGI(TAG, "W5500 started; waiting for link and DHCP address");
 #endif
 }
@@ -541,8 +541,9 @@ bool http_get_json(const std::string &url, std::string &body)
     esp_http_client_cleanup(client);
 
     if (err != ESP_OK || status != 200 || response.overflow) {
-        ESP_LOGW(TAG, "HTTP request failed: err=%s status=%d overflow=%d",
-                 esp_err_to_name(err), status, response.overflow ? 1 : 0);
+        ESP_LOGW(TAG, "HTTP request failed: err=%s status=%d overflow=%d body=%.120s",
+                 esp_err_to_name(err), status, response.overflow ? 1 : 0,
+                 response.body.c_str());
         return false;
     }
     body.swap(response.body);
@@ -565,7 +566,9 @@ void copy_text(char *destination, size_t destination_size, const char *source)
 
 bool fetch_weather()
 {
-    const std::string url = std::string("https://api.openweathermap.org/data/2.5/weather?lat=") +
+    // Use plain HTTP port 80 to prevent MBEDTLS_ERR_SSL_ALLOC_FAILED heap exhaustion,
+    // as HUB75 DMA buffers already occupy ~295 KB of internal SRAM.
+    const std::string url = std::string("http://api.openweathermap.org/data/2.5/weather?lat=") +
         CONFIG_WEATHER_LATITUDE + "&lon=" + CONFIG_WEATHER_LONGITUDE +
         "&appid=" + CONFIG_OPENWEATHER_API_KEY + "&units=metric";
 
@@ -627,7 +630,8 @@ const char *aqi_description(int aqi)
 
 bool fetch_aqi()
 {
-    const std::string url = std::string("https://api.openweathermap.org/data/2.5/air_pollution?lat=") +
+    // Use plain HTTP port 80 to avoid SSL allocation failures
+    const std::string url = std::string("http://api.openweathermap.org/data/2.5/air_pollution?lat=") +
         CONFIG_WEATHER_LATITUDE + "&lon=" + CONFIG_WEATHER_LONGITUDE +
         "&appid=" + CONFIG_OPENWEATHER_API_KEY;
 
@@ -737,15 +741,15 @@ void get_aqi_color(int aqi, uint8_t &r, uint8_t &g, uint8_t &b)
 void draw_dashboard(Hub75Driver &display, const PpmImage &image,
                     int image_offset, const DashboardData &data)
 {
-    // Draw scrolling image in the top 192x48 area (fully paints rows 0..47)
+    // Fully clear active buffer to black across all physical rows and DMA width.
+    // This wipes stale double-buffer data and eliminates random flickering in the black area.
+    display.clear();
+
+    // Draw scrolling image in the top 192x48 area
     draw_scrolling_image(display, image, image_offset);
 
     // A one-pixel separator divides the animated image from the information.
     display.fill(0, IMAGE_VIEW_HEIGHT, DISPLAY_WIDTH, 1, 0, 70, 110);
-
-    // Clear only the bottom information area before drawing text.
-    display.fill(0, IMAGE_VIEW_HEIGHT + 1, DISPLAY_WIDTH,
-                 DISPLAY_HEIGHT - (IMAGE_VIEW_HEIGHT + 1), 0, 0, 0);
 
     char line1[64] = "TIME SYNCING";
     char time_text[24] = {};
