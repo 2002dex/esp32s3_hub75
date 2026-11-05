@@ -84,13 +84,13 @@ Hub75Config make_display_config()
     cfg.pins.clk = 21;
 
     // Signal integrity and anti-ghosting tuning:
-    // 8 MHz clock provides clean setup/hold margin across 4 cascaded panels on ribbon cables.
-    // Inverted clock phase latches data in the center of the clock eye.
-    // Latch blanking = 4 guarantees OE is blanked during LAT and row address transitions.
-    cfg.output_clock_speed = Hub75ClockSpeed::HZ_8M;
-    cfg.min_refresh_rate = 70;
+    // 10 MHz clock and 90 Hz refresh rate provide rock-solid, vibration-free display.
+    // clk_phase_inverted must be false so rising clock edges occur mid-bit (data stable),
+    // eliminating letter jitter/vibration. Latch blanking = 4 prevents row ghosting.
+    cfg.output_clock_speed = Hub75ClockSpeed::HZ_10M;
+    cfg.min_refresh_rate = 90;
     cfg.latch_blanking = 4;
-    cfg.clk_phase_inverted = true;
+    cfg.clk_phase_inverted = false;
     cfg.double_buffer = true;
     cfg.brightness = DISPLAY_BRIGHTNESS;
     return cfg;
@@ -261,19 +261,21 @@ void draw_scrolling_image(Hub75Driver &display, const PpmImage &image, int offse
     if (!image.valid()) return;
     const int src_y_max = std::min(IMAGE_VIEW_HEIGHT, image.height);
     const int cur_offset = offset % image.width;
+    // Keep the boundary column (x = 191) clear to prevent shift-register crosstalk into Panel 3
+    constexpr int SCROLL_WIDTH = DISPLAY_WIDTH - 1;
 
     for (int y = 0; y < src_y_max; ++y) {
         const uint8_t *row_base =
             image.rgb_data + (static_cast<size_t>(y) * static_cast<size_t>(image.width)) * 3U;
 
-        if (cur_offset + DISPLAY_WIDTH <= image.width) {
+        if (cur_offset + SCROLL_WIDTH <= image.width) {
             display.draw_pixels(0, static_cast<uint16_t>(y),
-                                DISPLAY_WIDTH, 1,
+                                SCROLL_WIDTH, 1,
                                 row_base + static_cast<size_t>(cur_offset) * 3U,
                                 Hub75PixelFormat::RGB888, Hub75ColorOrder::RGB, false);
         } else {
             const int w1 = image.width - cur_offset;
-            const int w2 = DISPLAY_WIDTH - w1;
+            const int w2 = SCROLL_WIDTH - w1;
 
             display.draw_pixels(0, static_cast<uint16_t>(y),
                                 static_cast<uint16_t>(w1), 1,
@@ -958,7 +960,7 @@ const Icon8x8 &get_weather_icon(const char *icon_code, int weather_id)
     return ICON_SUN;
 }
 
-constexpr int TEXT_MARGIN_X = 8; // Indent starting text for clear viewing angle from bezel
+constexpr int TEXT_MARGIN_X = 4; // Spacing 4 LEDs from left bezel to prevent right-edge clipping
 
 void draw_dashboard(Hub75Driver &display, const PpmImage &image,
                     int image_offset, const DashboardData &data)
@@ -990,9 +992,9 @@ void draw_dashboard(Hub75Driver &display, const PpmImage &image,
         draw_icon_8x8(display, get_weather_icon(data.weather_icon, data.weather_id),
                       TEXT_MARGIN_X, 59);
         char line2[64];
-        std::snprintf(line2, sizeof(line2), "%s  WIND %.1fM/S",
+        std::snprintf(line2, sizeof(line2), "%s  W:%.1fM/S",
                       data.weather_description, data.wind_mps);
-        draw_text(display, line2, TEXT_MARGIN_X + 11, 60, 255, 210, 40);
+        draw_text(display, line2, TEXT_MARGIN_X + 10, 60, 255, 210, 40);
     } else {
         draw_text(display, "WX WAITING FOR DATA", TEXT_MARGIN_X, 60, 255, 210, 40);
     }
@@ -1004,10 +1006,10 @@ void draw_dashboard(Hub75Driver &display, const PpmImage &image,
         std::snprintf(temp_str, sizeof(temp_str), "%.1fC", data.temperature_c);
         draw_text(display, temp_str, TEXT_MARGIN_X + 7, 70, 255, 120, 120);
 
-        draw_icon_5x7(display, ICON_DROPLET, TEXT_MARGIN_X + 62, 70);
+        draw_icon_5x7(display, ICON_DROPLET, TEXT_MARGIN_X + 55, 70);
         char hum_str[16];
         std::snprintf(hum_str, sizeof(hum_str), "%d%%", data.humidity_percent);
-        draw_text(display, hum_str, TEXT_MARGIN_X + 69, 70, 0, 220, 255);
+        draw_text(display, hum_str, TEXT_MARGIN_X + 62, 70, 0, 220, 255);
     } else {
         draw_text(display, "TEMP:N/A HUM:N/A", TEXT_MARGIN_X, 70, 0, 220, 255);
     }
@@ -1067,6 +1069,10 @@ extern "C" void app_main(void)
         abort();
     }
     display.set_brightness(DISPLAY_BRIGHTNESS);
+
+    // Soften slew rate on clock and latch to suppress cable transmission-line ringing and crosstalk
+    gpio_set_drive_capability(GPIO_NUM_21, GPIO_DRIVE_CAP_2); // CLK
+    gpio_set_drive_capability(GPIO_NUM_47, GPIO_DRIVE_CAP_2); // LAT
 
     static PpmImage image;
     if (!image.load(image_ppm_start, image_ppm_end)) {
